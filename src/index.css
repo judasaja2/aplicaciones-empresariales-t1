@@ -1,50 +1,129 @@
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+    display: block;
+}
+
+blockquote, q {
+    quotes: none;
+}
+
+blockquote:before, blockquote:after,
+q:before, q:after {
+    content: '';
+    content: none;
+}
+
+h3.search_h3{
+  display: inline-block;
+  padding-right: 10px;
+}
+
+h3 { 
+  text-shadow: 1px 1px 1px rgb(190, 190, 190);
+}
+
+input.search_submit{
+  margin-left: 10px;
+}
+
+div.search_div{
+  text-align: center;
+  vertical-align: middle;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  padding-top:15px;
+  padding-bottom: 15px;
+  background-color: rgb(26, 26, 26);
+}
+
+div.render_items_div{
+  padding-top:75px;
+  padding-bottom: 5px;
+}
+
 body {
-  font: 14px "Century Gothic", Futura, sans-serif;
+  color: #fff;
+  font-family: 'Corben', Georgia, Times, serif;
   margin: 20px;
+  background-color: rgb(39, 39, 39)
+}
+
+table.item_table {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+  padding-top: 30px;
+  width: 40%;
+  border-spacing: 0;
+  color: #000;
+}
+
+table.search_table{
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+tr.item_table_row {
+  text-align: center;
+}
+
+tr.item_table_row td{
+  vertical-align: middle;
+  background-color: rgb(255, 255, 255);
+  border: 0;
+}
+
+td.item_td_left{
+  width: 30%;
+  text-align: center;
+  border-top-left-radius: 15px;
+}
+
+td.item_td_right{
+  width: 70%;
+  text-align: left;
+  border-top-right-radius: 25px;
+}
+
+td.item_td_button{
+  
+  width: 80%;
+  text-align: center;
+  border-bottom-left-radius: 25px;
+  border-bottom-right-radius: 30px;
+}
+
+ul .item_unordered_list li{
+  text-align: left;
 }
 
 ol, ul {
-  padding-left: 30px;
+  list-style: none;
 }
 
-.board-row:after {
-  clear: both;
-  content: "";
-  display: table;
-}
-
-.status {
-  margin-bottom: 10px;
-}
-
-.square {
-  background: #fff;
-  border: 1px solid #999;
+.pagination a {
+  color: rgb(255, 255, 255);
   float: left;
-  font-size: 24px;
-  font-weight: bold;
-  line-height: 34px;
-  height: 34px;
-  margin-right: -1px;
-  margin-top: -1px;
-  padding: 0;
-  text-align: center;
-  width: 34px;
+  padding: 10px 15px;
+  text-decoration: none;
+  transition: background-color .3s;
 }
 
-.square:focus {
-  outline: none;
+.pagination a.active {
+  background-color: rgb(17, 101, 226);
+  color: white;
 }
 
-.kbd-navigation .square:focus {
-  background: #ddd;
+.pagination a:hover:not(.active) {background-color: #ddd;}
+
+.hide_pagination{
+  display: none;
 }
 
-.game {
-  display: flex;
-  flex-direction: row;
-}
-
-.game-info {
-  margin-left: 20px;
+div.pagination{
+  margin-left: 10px;
 }
