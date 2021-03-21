@@ -19,6 +19,7 @@ class Search extends React.Component{
       pagination: true,
       activePage: 1,
       anchors: Array(5).fill(null),
+      search: '',
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSearch = this.handleSearch.bind(this);
@@ -27,9 +28,10 @@ class Search extends React.Component{
 
   async search_items(itemToSearch){
     const retrievedItems = Array(this.props.limit).fill(null);
-    const offset = this.state.activePage * 10;
+    const offset = (this.state.activePage-1) * this.props.limit;
+    console.log("https://api.mercadolibre.com/sites/MCO/search?q=" + itemToSearch + "&limit=" + this.props.limit + "&offset=" + offset)
     const response = await axios.get("https://api.mercadolibre.com/sites/MCO/search?q=" + itemToSearch + "&limit=" + this.props.limit + "&offset=" + offset, {
-    timeout: 1000,
+    timeout: 5000,
     headers: {
       'Authorization': 'Bearer $ACCESS_TOKEN',
     },
@@ -41,11 +43,12 @@ class Search extends React.Component{
     .catch(function(error){
       return({results: "error"})
     })
-    return(response.results)
+    const results = response.results;
+    return(results)
   }
 
   handleChange(event) {    
-    this.setState({value: event.target.value});  
+    this.setState({value: event.target.value});
   }
 
   async handleSearch(event) {
@@ -53,6 +56,7 @@ class Search extends React.Component{
     if(this.state.value == ""){
       return(0)
     }
+    this.setState({search: this.state.value})
     let results = await this.search_items(this.state.value)
     if(results == "error"){
       console.log("It was not possible to retrieve data.")
@@ -63,11 +67,11 @@ class Search extends React.Component{
   }
 
   async handleAnchorClick(i){
-    this.setState({activePage: i})
+    await this.setState(activePage => ({activePage: i}))
     if(this.state.value == ""){
       return(0)
     }
-    let results = await this.search_items(this.state.value)
+    let results = await this.search_items(this.state.search)
     if(results == "error"){
       console.log("It was not possible to retrieve data.")
       return(0)
@@ -94,8 +98,8 @@ class Search extends React.Component{
         anchors[i] = this.renderAnchor(i+1)
       }
     } else{
-      for(let i = this.state.activePage-1; i < this.state.activePage+2; i++){
-        anchors[i-this.state.activePage-1] = this.renderAnchor(i+1)
+      for(let i = this.state.activePage; i < (this.state.activePage+5); i++){
+        anchors[i-this.state.activePage] = this.renderAnchor(i-2)
       }
     }
     this.setState({anchors: anchors})
@@ -107,6 +111,9 @@ class Search extends React.Component{
         <table className="search_table">
           <thead>
             <tr>
+              <td>
+                <h2>JUAN DAVID SÁNCHEZ JARAMILLO</h2>
+              </td>
               <td>
                 <form onSubmit={this.handleSearch}>        
                   <h3 className="search_h3">Producto:</h3>
@@ -156,7 +163,7 @@ function Item(props){
 
 async function search_user(user_id){
   const response = await axios.get("https://api.mercadolibre.com/users/" + user_id, {
-  timeout: 1000,
+  timeout: 5000,
   headers: {
     'Authorization': 'Bearer $ACCESS_TOKEN',
   },
@@ -187,28 +194,11 @@ function formatPrice(unformatted_price){
 }
 
 
-/*
-  render() {
-    return (
-      <div className={this.props.pagination ? "pagination" : "hide_pagination"}>
-        <a href="#">&laquo;</a>
-        <a href="#">1</a>
-        <a className="active" href="#">2</a>
-        <a href="#">3</a>
-        <a href="#">4</a>
-        <a href="#">5</a>
-        <a href="#">&raquo;</a>
-      </div>
-    );
-  }
-}
-*/
-
 class Shop extends React.Component{
   constructor(props){
     super(props);
     this.state = {
-      items: Array(10).fill(null),
+      items: Array(20).fill(null),
     }
     this.handleSearchClick = this.handleSearchClick.bind(this);
   }
@@ -240,10 +230,9 @@ class Shop extends React.Component{
       items[i] = this.renderItem(item)
     }
     this.setState({items: items})
+    console.log(this.state.items)
   }
 
-
-  //<div className="render_items_div">{this.renderItems()}</div>
   render() {
     return (
       <div className="shop">
@@ -253,7 +242,20 @@ class Shop extends React.Component{
             limit={this.state.items.length}
             handleSearchClick={this.handleSearchClick}
           />
-          <div className="render_items_div">{this.state.items}</div>
+          <table className="test" border="2px">
+            <thead border="2px">
+            <tr botder="2px">
+              <td border="2px">
+                <div className="render_items_div">{this.state.items.splice(0,Math.ceil(this.state.items.length / 2))}</div>
+              </td>
+              <td border="2px">
+                <div className="render_items_div">{this.state.items}</div>
+                <div>{this.state.items.splice(-(Math.ceil(this.state.items.length / 2)))}</div>
+              </td>
+            </tr>
+            </thead>
+          </table>
+          
         </div>
       </div>
     );
