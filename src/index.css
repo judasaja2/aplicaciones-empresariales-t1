@@ -59,6 +59,7 @@ table.item_table {
   width: 75%;
   border-spacing: 0;
   color: #000;
+  height: 250px;
 }
 
 table.search_table{

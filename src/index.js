@@ -6,7 +6,7 @@ const axios = require('axios');
 
 function Anchor(props){
   return(
-    <a href="#" onClick={props.handleAnchorClick} className={props.className}>{props.number}</a>
+    <a href="" onClick={props.handleAnchorClick} className={props.className}>{props.number}</a>
   )
 }
 
@@ -198,7 +198,9 @@ class Shop extends React.Component{
   constructor(props){
     super(props);
     this.state = {
-      items: Array(20).fill(null),
+      items: 20,
+      leftItems: Array(10).fill(null),
+      rightItems: Array(10).fill(null),
     }
     this.handleSearchClick = this.handleSearchClick.bind(this);
   }
@@ -215,22 +217,37 @@ class Shop extends React.Component{
   }
 
   async handleSearchClick(results) {
-    const items = this.state.items.slice();
+    const leftItems = this.state.leftItems.slice();
+    const rightItems = this.state.rightItems.slice();
     for(let i = 0; i < results.length; i++){
-      const seller_name = await search_user(results[i].seller.id)
-      const formatted_price = formatPrice(results[i].price)
-      const item = {
-        item_id: results[i].id,
-        item_price: formatted_price,
-        item_name: results[i].title,
-        item_image: results[i].thumbnail,
-        item_seller_id: results[i].seller.id,
-        item_seller: seller_name,
+      if(i < results.length/2){
+        const seller_name = await search_user(results[i].seller.id)
+        const formatted_price = formatPrice(results[i].price)
+        const item = {
+          item_id: results[i].id,
+          item_price: formatted_price,
+          item_name: results[i].title,
+          item_image: results[i].thumbnail,
+          item_seller_id: results[i].seller.id,
+          item_seller: seller_name,
+        }
+        leftItems[i] = this.renderItem(item)
+      } else {
+        const seller_name = await search_user(results[i].seller.id)
+        const formatted_price = formatPrice(results[i].price)
+        const item = {
+          item_id: results[i].id,
+          item_price: formatted_price,
+          item_name: results[i].title,
+          item_image: results[i].thumbnail,
+          item_seller_id: results[i].seller.id,
+          item_seller: seller_name,
+        }
+        rightItems[i] = this.renderItem(item)
       }
-      items[i] = this.renderItem(item)
+
     }
-    this.setState({items: items})
-    console.log(this.state.items)
+    this.setState({leftItems: leftItems, rightItems: rightItems})
   }
 
   render() {
@@ -239,18 +256,17 @@ class Shop extends React.Component{
         <link rel="shortcut icon" href="#"></link>
         <div className="shop-board">
           <Search 
-            limit={this.state.items.length}
+            limit={this.state.items}
             handleSearchClick={this.handleSearchClick}
           />
-          <table className="test" border="2px">
-            <thead border="2px">
-            <tr botder="2px">
-              <td border="2px">
-                <div className="render_items_div">{this.state.items.splice(0,Math.ceil(this.state.items.length / 2))}</div>
+          <table className="test">
+            <thead >
+            <tr>
+              <td >
+                <div className="render_items_div">{this.state.leftItems}</div>
               </td>
-              <td border="2px">
-                <div className="render_items_div">{this.state.items}</div>
-                <div>{this.state.items.splice(-(Math.ceil(this.state.items.length / 2)))}</div>
+              <td >
+                <div className="render_items_div">{this.state.rightItems}</div>
               </td>
             </tr>
             </thead>
