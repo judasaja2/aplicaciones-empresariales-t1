@@ -31,7 +31,7 @@ class Search extends React.Component{
     const offset = (this.state.activePage-1) * this.props.limit;
     console.log("https://api.mercadolibre.com/sites/MCO/search?q=" + itemToSearch + "&limit=" + this.props.limit + "&offset=" + offset)
     const response = await axios.get("https://api.mercadolibre.com/sites/MCO/search?q=" + itemToSearch + "&limit=" + this.props.limit + "&offset=" + offset, {
-    timeout: 5000,
+    timeout: 500,
     headers: {
       'Authorization': 'Bearer $ACCESS_TOKEN',
     },
@@ -163,7 +163,7 @@ function Item(props){
 
 async function search_user(user_id){
   const response = await axios.get("https://api.mercadolibre.com/users/" + user_id, {
-  timeout: 5000,
+  timeout: 500,
   headers: {
     'Authorization': 'Bearer $ACCESS_TOKEN',
   },
