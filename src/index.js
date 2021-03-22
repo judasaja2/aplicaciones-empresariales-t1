@@ -6,7 +6,7 @@ const axios = require('axios');
 
 function Anchor(props){
   return(
-    <a href="" onClick={props.handleAnchorClick} className={props.className}>{props.number}</a>
+    <a href="#" onClick={props.handleAnchorClick} className={props.className}>{props.number}</a>
   )
 }
 
@@ -27,11 +27,8 @@ class Search extends React.Component{
   }
 
   async search_items(itemToSearch){
-    const retrievedItems = Array(this.props.limit).fill(null);
     const offset = (this.state.activePage-1) * this.props.limit;
-    console.log("https://api.mercadolibre.com/sites/MCO/search?q=" + itemToSearch + "&limit=" + this.props.limit + "&offset=" + offset)
     const response = await axios.get("https://api.mercadolibre.com/sites/MCO/search?q=" + itemToSearch + "&limit=" + this.props.limit + "&offset=" + offset, {
-    timeout: 500,
     headers: {
       'Authorization': 'Bearer $ACCESS_TOKEN',
     },
@@ -43,8 +40,7 @@ class Search extends React.Component{
     .catch(function(error){
       return({results: "error"})
     })
-    const results = response.results;
-    return(results)
+    return(response.results)
   }
 
   handleChange(event) {    
@@ -53,12 +49,12 @@ class Search extends React.Component{
 
   async handleSearch(event) {
     event.preventDefault();
-    if(this.state.value == ""){
+    if(this.state.value === ""){
       return(0)
     }
     this.setState({search: this.state.value})
     let results = await this.search_items(this.state.value)
-    if(results == "error"){
+    if(results === "error"){
       console.log("It was not possible to retrieve data.")
       return(0)
     }
@@ -68,11 +64,11 @@ class Search extends React.Component{
 
   async handleAnchorClick(i){
     await this.setState(activePage => ({activePage: i}))
-    if(this.state.value == ""){
+    if(this.state.value === ""){
       return(0)
     }
     let results = await this.search_items(this.state.search)
-    if(results == "error"){
+    if(results === "error"){
       console.log("It was not possible to retrieve data.")
       return(0)
     }
@@ -81,7 +77,7 @@ class Search extends React.Component{
   }
 
   renderAnchor(i){
-    const className = this.state.activePage == i ? "active" : "inactive"
+    const className = this.state.activePage === i ? "active" : "inactive"
     return (
       <Anchor
         handleAnchorClick={() => this.handleAnchorClick(i)}
@@ -111,9 +107,11 @@ class Search extends React.Component{
         <table className="search_table">
           <thead>
             <tr>
-              <td>
-                <h2>JUAN DAVID SÁNCHEZ JARAMILLO</h2>
+            <td className="name" colSpan="2">
+                <h2 className="name">Juan David Sánchez Jaramillo: Tienda</h2>
               </td>
+            </tr>
+            <tr>
               <td>
                 <form onSubmit={this.handleSearch}>        
                   <h3 className="search_h3">Producto:</h3>
@@ -142,7 +140,7 @@ function Item(props){
       <table class ="item_table">
         <thead>
         <tr className="item_table_row">
-          <td className="item_td_left"><img src={props.image} width="100" height="100"></img></td>
+          <td className="item_td_left"><img src={props.image} alt={props.altimg} width="100" height="100"></img></td>
           <td className="item_td_right">
             <ul className="item_unordered_list">
               <h3>{props.name}</h3>
@@ -163,7 +161,6 @@ function Item(props){
 
 async function search_user(user_id){
   const response = await axios.get("https://api.mercadolibre.com/users/" + user_id, {
-  timeout: 500,
   headers: {
     'Authorization': 'Bearer $ACCESS_TOKEN',
   },
@@ -183,7 +180,7 @@ function formatPrice(unformatted_price){
   const price = unformatted_price.toString();
   let formattedPrice = ""
   for(let i = price.length; i >= 0; i--){
-    if(i != price.length && (i-price.length+1)%3 == 0){
+    if(i !== price.length && (i-price.length+1)%3 === 0){
       formattedPrice += "."
     }
     formattedPrice += price[i];
@@ -209,6 +206,7 @@ class Shop extends React.Component{
     return (
       <Item
         image={item.item_image}
+        altimg={item.item_altimg}
         name={item.item_name}
         price={item.item_price}
         seller={item.item_seller}
@@ -228,6 +226,7 @@ class Shop extends React.Component{
           item_price: formatted_price,
           item_name: results[i].title,
           item_image: results[i].thumbnail,
+          item_altimg: results[i].id+"_img",
           item_seller_id: results[i].seller.id,
           item_seller: seller_name,
         }
@@ -243,7 +242,7 @@ class Shop extends React.Component{
           item_seller_id: results[i].seller.id,
           item_seller: seller_name,
         }
-        rightItems[i] = this.renderItem(item)
+        rightItems[i-10] = this.renderItem(item)
       }
 
     }
@@ -259,7 +258,7 @@ class Shop extends React.Component{
             limit={this.state.items}
             handleSearchClick={this.handleSearchClick}
           />
-          <table className="test">
+          <table className="items">
             <thead >
             <tr>
               <td >
@@ -278,7 +277,7 @@ class Shop extends React.Component{
   }
 }
 
-// ========================================
+// ============================================================
 
 ReactDOM.render(
   <Shop />,
