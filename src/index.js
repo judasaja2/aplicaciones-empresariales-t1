@@ -26,21 +26,68 @@ class Search extends React.Component{
     this.handleAnchorClick = this.handleAnchorClick.bind(this);
   }
 
-  async search_items(itemToSearch){
-    const offset = (this.state.activePage-1) * this.props.limit;
-    const response = await axios.get("https://api.mercadolibre.com/sites/MCO/search?q=" + itemToSearch + "&limit=" + this.props.limit + "&offset=" + offset, {
+  async get_request(url){
+    const response = await axios.get(url, {
     headers: {
       'Authorization': 'Bearer $ACCESS_TOKEN',
     },
+    timeout: 1000,
     responseType: 'json',
     })
     .then(function(response){
       return(response.data)
     })
     .catch(function(error){
+      console.log(error)
       return({results: "error"})
     })
+    return(response)
+  }
+
+  async search_items(item_name){
+    const offset = (this.state.activePage-1) * this.props.limit;
+    const response = await this.get_request("https://api.mercadolibre.com/sites/MCO/search?q=" + item_name + "&limit=" + this.props.limit + "&offset=" + offset + "&attributes=results")
     return(response.results)
+  }
+
+  async search_user(user_id){
+    const response = await this.get_request("https://api.mercadolibre.com/users/" + user_id)
+    return(response.nickname)
+  }
+
+  format_image(img_url){
+    return(img_url.substring(0, img_url.length-5)+"O.jpg")
+  }
+
+  async search(itemToSearch){
+    const items = await this.search_items(itemToSearch)
+    const sellers_ids = []
+    const items_images = []
+    try{
+      for(let i = 0; i < items.length; i++){
+        const seller_id = await this.search_user(items[i].seller.id)
+        sellers_ids.push(seller_id)
+      }
+      const response = []
+      for(let i = 0; i < items.length; i++){
+        const image_formatted = this.format_image(items[i].thumbnail)
+        const item = {
+          id: items[i].id,
+          price: items[i].price,
+          title: items[i].title,
+          thumbnail: image_formatted,
+          seller: {
+            id: items[i].seller.id,
+            name: sellers_ids[i]
+          },
+        }
+        response.push(item)
+      }
+      return(response)
+    } catch(error){
+      console.log(error)
+      return("error")
+    }
   }
 
   handleChange(event) {    
@@ -53,7 +100,7 @@ class Search extends React.Component{
       return(0)
     }
     this.setState({search: this.state.value})
-    let results = await this.search_items(this.state.value)
+    const results = await this.search(this.state.value)
     if(results === "error"){
       console.log("It was not possible to retrieve data.")
       return(0)
@@ -67,7 +114,7 @@ class Search extends React.Component{
     if(this.state.value === ""){
       return(0)
     }
-    let results = await this.search_items(this.state.search)
+    let results = await this.search(this.state.search)
     if(results === "error"){
       console.log("It was not possible to retrieve data.")
       return(0)
@@ -126,21 +173,37 @@ class Search extends React.Component{
               </td>
             </tr>
           </thead>
-          
         </table>
       </div>
     )
   }
 }
 
+async function search_user(user_id){
+  const response = await axios.get("https://api.mercadolibre.com/users/" + user_id, {
+  headers: {
+    'Authorization': 'Bearer $ACCESS_TOKEN',
+  },
+  timeout: 1000,
+  responseType: 'json',
+  })
+  .then(function(response){
+    return(response.data)
+  })
+  .catch(function(error){
+    console.log(error)
+  })
+  return(response.nickname)
+}
+
 
 function Item(props){
   return(
     <div>
-      <table class ="item_table">
+      <table class ={props.className}>
         <thead>
         <tr className="item_table_row">
-          <td className="item_td_left"><img src={props.image} alt={props.altimg} width="100" height="100"></img></td>
+          <td className="item_td_left"><img src={props.image} alt={props.altimg} width="224" height="224"></img></td>
           <td className="item_td_right">
             <ul className="item_unordered_list">
               <h3>{props.name}</h3>
@@ -156,23 +219,6 @@ function Item(props){
       </table>
     </div>
   );
-}
-
-
-async function search_user(user_id){
-  const response = await axios.get("https://api.mercadolibre.com/users/" + user_id, {
-  headers: {
-    'Authorization': 'Bearer $ACCESS_TOKEN',
-  },
-  responseType: 'json',
-  })
-  .then(function(response){
-    return(response.data)
-  })
-  .catch(function(error){
-    console.log(error)
-  })
-  return(response.nickname)
 }
 
 
@@ -202,9 +248,10 @@ class Shop extends React.Component{
     this.handleSearchClick = this.handleSearchClick.bind(this);
   }
 
-  renderItem(item) {
+  renderItem(item, class_name) {
     return (
-      <Item
+      <Item 
+        className={class_name}
         image={item.item_image}
         altimg={item.item_altimg}
         name={item.item_name}
@@ -219,7 +266,6 @@ class Shop extends React.Component{
     const rightItems = this.state.rightItems.slice();
     for(let i = 0; i < results.length; i++){
       if(i < results.length/2){
-        const seller_name = await search_user(results[i].seller.id)
         const formatted_price = formatPrice(results[i].price)
         const item = {
           item_id: results[i].id,
@@ -228,23 +274,30 @@ class Shop extends React.Component{
           item_image: results[i].thumbnail,
           item_altimg: results[i].id+"_img",
           item_seller_id: results[i].seller.id,
-          item_seller: seller_name,
+          item_seller: results[i].seller.name,
         }
-        leftItems[i] = this.renderItem(item)
+        if(i === 0){
+          leftItems[i] = this.renderItem(item, "firstItem")
+        } else{
+          leftItems[i] = this.renderItem(item, "item_table")
+        }
       } else {
-        const seller_name = await search_user(results[i].seller.id)
         const formatted_price = formatPrice(results[i].price)
         const item = {
           item_id: results[i].id,
           item_price: formatted_price,
           item_name: results[i].title,
           item_image: results[i].thumbnail,
+          item_altimg: results[i].id+"_img",
           item_seller_id: results[i].seller.id,
-          item_seller: seller_name,
+          item_seller: results[i].seller.name,
         }
-        rightItems[i-10] = this.renderItem(item)
+        if(i === 10){
+          rightItems[i-10] = this.renderItem(item, "firstItem")
+        } else{
+          rightItems[i-10] = this.renderItem(item, "item_table")
+        }
       }
-
     }
     this.setState({leftItems: leftItems, rightItems: rightItems})
   }
