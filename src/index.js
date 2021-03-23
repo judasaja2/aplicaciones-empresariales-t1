@@ -155,7 +155,7 @@ class Search extends React.Component{
           <thead>
             <tr>
             <td className="name" colSpan="2">
-                <h2 className="name">Juan David Sánchez Jaramillo: Tienda</h2>
+                <h1 className="name">Juan David Sánchez Jaramillo: Tienda</h1>
               </td>
             </tr>
             <tr>
@@ -206,8 +206,8 @@ function Item(props){
           <td className="item_td_left"><img src={props.image} alt={props.altimg} width="224" height="224"></img></td>
           <td className="item_td_right">
             <ul className="item_unordered_list">
-              <h3>{props.name}</h3>
-              <li>Precio: ${props.price}</li>
+              <h2>{props.name}</h2>
+              <li><h3>$ {props.price}</h3></li>
               <li>Vendedor: {props.seller}</li>
             </ul>
           </td>
