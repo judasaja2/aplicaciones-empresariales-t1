@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import Modal from 'react-modal';
 import './index.css';
 const axios = require('axios');
 
@@ -31,7 +32,7 @@ class Search extends React.Component{
     headers: {
       'Authorization': 'Bearer $ACCESS_TOKEN',
     },
-    timeout: 1000,
+    timeout: 500,
     responseType: 'json',
     })
     .then(function(response){
@@ -213,7 +214,7 @@ function Item(props){
           </td>
         </tr>
         <tr className="item_table_row">
-          <td className="item_td_button" colSpan="2"><button className="item_button">Más información</button></td>
+          <td className="item_td_button" colSpan="2"><button onClick={props.openModal} className="item_button">Más información</button></td>
         </tr>
         </thead>
       </table>
@@ -244,8 +245,11 @@ class Shop extends React.Component{
       items: 20,
       leftItems: Array(10).fill(null),
       rightItems: Array(10).fill(null),
+      modalIsOpen: false,
     }
     this.handleSearchClick = this.handleSearchClick.bind(this);
+    this.openModal = this.openModal.bind(this);
+    this.closeModal = this.closeModal.bind(this);
   }
 
   renderItem(item, class_name) {
@@ -257,6 +261,7 @@ class Shop extends React.Component{
         name={item.item_name}
         price={item.item_price}
         seller={item.item_seller}
+        openModal={() => this.openModal(item.number)}
       />
     );
   }
@@ -275,6 +280,7 @@ class Shop extends React.Component{
           item_altimg: results[i].id+"_img",
           item_seller_id: results[i].seller.id,
           item_seller: results[i].seller.name,
+          number: i,
         }
         if(i === 0){
           leftItems[i] = this.renderItem(item, "firstItem")
@@ -291,6 +297,7 @@ class Shop extends React.Component{
           item_altimg: results[i].id+"_img",
           item_seller_id: results[i].seller.id,
           item_seller: results[i].seller.name,
+          number: i,
         }
         if(i === 10){
           rightItems[i-10] = this.renderItem(item, "firstItem")
@@ -302,6 +309,14 @@ class Shop extends React.Component{
     this.setState({leftItems: leftItems, rightItems: rightItems})
   }
 
+  openModal (data) {
+    this.setState({ modalIsOpen: true });
+  };
+
+  closeModal = () => {
+    this.setState({ modalIsOpen: false });
+  };
+
   render() {
     return (
       <div className="shop">
@@ -311,6 +326,13 @@ class Shop extends React.Component{
             limit={this.state.items}
             handleSearchClick={this.handleSearchClick}
           />
+          <Modal 
+            isOpen={this.state.modalIsOpen}
+            onRequestClose={this.closeModal}>
+            <button onClick={this.closeModal}>Cerrar</button>
+            <div>I am a modal</div>
+            <label>modal</label>
+          </Modal>
           <table className="items">
             <thead >
             <tr>
