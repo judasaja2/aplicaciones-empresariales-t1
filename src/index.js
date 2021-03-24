@@ -203,7 +203,7 @@ function Item(props){
       <table class ={props.className}>
         <thead>
         <tr className="item_table_row">
-          <td className="item_td_left"><img src={props.image} alt={props.altimg} width="224" height="224"></img></td>
+          <td className="item_td_left"><img className="item_image" src={props.image} alt={props.altimg} width="224" height="224"></img></td>
           <td className="item_td_right">
             <ul className="item_unordered_list">
               <h2>{props.name}</h2>

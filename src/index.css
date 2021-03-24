@@ -53,18 +53,7 @@ body {
   color: #fff;
   font-family: 'Corben', Georgia, Times, serif;
   margin: 20px;
-  background-color: rgb(39, 39, 39)
-}
-
-table.item_table {
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
-  padding-top: 40px;
-  width: 75%;
-  border-spacing: 0;
-  color: #000;
-  height: 350px;
+  background-color: rgb(238, 238, 238)
 }
 
 table.search_table{
@@ -86,19 +75,22 @@ tr.item_table_row td{
 td.item_td_left{
   width: 30%;
   text-align: center;
-  border-top-left-radius: 5px;
+  border-top-left-radius: 10px;
+  height: 80%;
 }
 
 td.item_td_right{
   width: 60%;
   text-align: left;
-  border-top-right-radius: 5px;
+  border-top-right-radius: 10px;
+  height: 80%;
 }
 
 td.item_td_button{
   text-align: center;
-  border-bottom-left-radius: 5px;
-  border-bottom-right-radius: 5px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  height: 20%;
 }
 
 ul .item_unordered_list li{
@@ -144,13 +136,27 @@ h1.name{
   text-shadow: 2px 2px 2px rgb(24, 24, 24);
 }
 
-.firstItem{
+.firstItem, table.item_table{
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
   margin-left: auto;
   margin-right: auto;
   text-align: center;
-  padding-top: 110px;
-  width: 75%;
+  margin-top: 120px;
+  width: 95%;
   border-spacing: 0;
   color: #000;
   height: 350px;
+  box-shadow: 0 0 3px 3px rgb(172, 172, 172);
+}
+
+table.item_table{
+  margin-top: 40px;
+}
+
+img.item_image{
+  border-radius: 50%;
+  box-shadow: 0 0 1px 1px rgb(73, 73, 73);
 }
