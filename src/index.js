@@ -219,7 +219,7 @@ class Search extends React.Component{
 function Item(props){
   return(
     <div>
-      <table class ={props.className}>
+      <table className ={props.className}>
         <thead>
         <tr className="item_table_row">
           <td className="item_td_left"><img className="item_image" src={props.image} alt={props.altimg} width="224" height="224"></img></td>
@@ -486,6 +486,8 @@ class Shop extends React.Component{
 }
 
 // ============================================================
+/* eslint-disable */
+console.log = console.warn = console.error = () => {};
 
 ReactDOM.render(
   <Shop />,
