@@ -94,8 +94,6 @@ class Search extends React.Component{
         sellers_id += ","+items[i].seller.id
       }
       const sellers = await this.search_users(sellers_id)
-
-      console.log(sellers[0].body.nickname)
       for(let i = 0; i < items.length; i++){
         for(let j = 0; j < sellers.length; j++){
           if(items[i].seller.id === sellers[j].body.id){
@@ -106,7 +104,6 @@ class Search extends React.Component{
       for(let i = 0; i < items.length; i++){
         const image_formatted = this.format_image(items[i].thumbnail)
         const discount = this.compute_discount(items[i].original_price, items[i].price)
-        console.log(discount)
         const item = {
           id: items[i].id,
           price: items[i].price,
@@ -244,7 +241,42 @@ function Item(props){
 }
 
 
-
+function DetailedItem(props){
+  return(
+    <div>
+      <table className="detailed_item_table">
+        <thead>
+        <tr className="detailed_item">
+          <td className="item_td_detailed_left">
+            <img className="item_image" src={props.image} alt={props.altimg} width="224" height="224"></img>
+          </td>
+          <td className="item_td_detailed_center">
+            <ul className="item_unordered_list">
+              <h2>{props.name}</h2>
+              <li><h3>$ {props.price}</h3></li>
+              <li>Vendedor: {props.seller}</li>
+              <li>Descuento: {props.discount}</li>
+            </ul>
+          </td>
+          <td className="item_td_detailed_right">
+            <ul className="detailed_item_ul">
+              <h2>** Calificación: {props.reviewsAmount > 0 ? (props.rating_average + " con " + props.reviewsAmount + " Opiniones") : "Por definir"}</h2>
+              {props.reviews.map(function (review){
+                return (
+                <li> 
+                  <h3>* {review.title}</h3>
+                  <label>{review.content}</label>
+                </li>
+                )
+              })}
+            </ul>
+          </td>
+        </tr>
+        </thead>
+      </table>
+    </div>
+  );
+}
 
 
 function formatPrice(unformatted_price){
@@ -319,7 +351,7 @@ class Shop extends React.Component{
         seller_id={item.item_seller_id}
         className={class_name}
         number={item.item_number}
-        discount={item.discount}
+        discount={item.item_discount}
         openModal={() => this.openModal(item.item_number)}
       />
     );
@@ -376,7 +408,7 @@ class Shop extends React.Component{
   }
 
   async openModal (item_number) {
-    console.log(item_number)
+    console.log(this.state.leftItems)
     if(item_number < 10){
       const reviews = await this.search_opinions(this.state.leftItems[item_number].props.id)
       const detailedItem = {reviews: reviews.reviews, reviewsAmount: reviews.reviews.length, rating_average: reviews.rating_average}
@@ -403,22 +435,6 @@ class Shop extends React.Component{
             handleSearchClick={this.handleSearchClick}
             reviews={this.state.reviews}
           />
-          <Modal 
-            isOpen={this.state.modalIsOpen}
-            onRequestClose={this.closeModal}>
-            <DetailedItem
-              image={this.state.detailedItemNumber >= 0 ? 
-                (this.state.detailedItemNumber < 10  ? this.state.leftItems[this.state.detailedItemNumber].props.image 
-                  : this.state.rightItems[this.state.detailedItemNumber%10].props.image) 
-                : null}
-              rating_average={this.state.detailedItem.rating_average}
-              reviewsAmount={this.state.detailedItem.reviewsAmount}
-              reviews={this.state.detailedItem.reviews}
-            /> 
-            <div className="button_container">
-              <button className="modal_button" onClick={this.closeModal}>Más resultados</button>
-            </div>
-          </Modal>
           <table className="items">
             <thead >
             <tr>
@@ -431,43 +447,42 @@ class Shop extends React.Component{
             </tr>
             </thead>
           </table>
-          
+          <Modal 
+            isOpen={this.state.modalIsOpen}
+            onRequestClose={this.closeModal}>
+            <div className="button_container">
+              <button className="modal_button" onClick={this.closeModal}>Más resultados</button>
+            </div>
+            <DetailedItem
+              image={this.state.detailedItemNumber >= 0 ? 
+                (this.state.detailedItemNumber < 10  ? this.state.leftItems[this.state.detailedItemNumber].props.image 
+                  : this.state.rightItems[this.state.detailedItemNumber%10].props.image) 
+                : null}
+              name={this.state.detailedItemNumber >= 0 ? 
+                (this.state.detailedItemNumber < 10  ? this.state.leftItems[this.state.detailedItemNumber].props.name 
+                  : this.state.rightItems[this.state.detailedItemNumber%10].props.name) 
+                : null}
+              price={this.state.detailedItemNumber >= 0 ? 
+                (this.state.detailedItemNumber < 10  ? this.state.leftItems[this.state.detailedItemNumber].props.price 
+                  : this.state.rightItems[this.state.detailedItemNumber%10].props.price) 
+                : null}
+              seller={this.state.detailedItemNumber >= 0 ? 
+                (this.state.detailedItemNumber < 10  ? this.state.leftItems[this.state.detailedItemNumber].props.seller 
+                  : this.state.rightItems[this.state.detailedItemNumber%10].props.seller) 
+                : null}
+              discount={this.state.detailedItemNumber >= 0 ? 
+                (this.state.detailedItemNumber < 10  ? this.state.leftItems[this.state.detailedItemNumber].props.discount + "%"
+                  : this.state.rightItems[this.state.detailedItemNumber%10].props.discount + "%") 
+                : null}
+              rating_average={this.state.detailedItem.rating_average}
+              reviewsAmount={this.state.detailedItem.reviewsAmount}
+              reviews={this.state.detailedItem.reviews}
+            /> 
+          </Modal>
         </div>
       </div>
     );
   }
-}
-
-function DetailedItem(props){
-  return(
-    <div>
-      <table className="detailed_item_table">
-        <thead>
-        <tr className="detailed_item">
-          <td className="item_td_detailed_left">
-            <img className="item_image" src={props.image} alt={props.altimg} width="224" height="224"></img>
-          </td>
-          <td className="item_td_detailef_center">
-
-          </td>
-          <td className="item_td_detailed_right">
-            <ul className="detailed_item_ul">
-              <h2>Calificación: {props.reviewsAmount > 0 ? (props.rating_average + " con " + props.reviewsAmount + " Opiniones") : "Por definir"}</h2>
-              {props.reviews.map(function (review){
-                return (
-                <li> 
-                  <h3>{review.title}</h3>
-                  <label>{review.content}</label>
-                </li>
-                )
-              })}
-            </ul>
-          </td>
-        </tr>
-        </thead>
-      </table>
-    </div>
-  );
 }
 
 // ============================================================
