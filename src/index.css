@@ -160,3 +160,51 @@ img.item_image{
   border-radius: 50%;
   box-shadow: 0 0 1px 1px rgb(73, 73, 73);
 }
+
+.modal_text{
+  margin-top: 150px;
+  color: black;
+}
+
+tr.detailed_item{
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+  margin-top: 120px;
+}
+
+table.detailed_item_table{
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 120px;
+  width: 90%;
+  border-spacing: 0;
+  color: #000;
+  height: 350px;
+}
+
+div.button_container{
+  width:20%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+button.modal_button{
+  margin-top: 20px;
+  width:100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+ul.detailed_item_ul {
+  list-style:decimal;
+  font-weight: bold;
+}
+
+label{
+  font-weight: normal;
+}

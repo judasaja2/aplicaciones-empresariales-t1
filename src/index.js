@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import Modal from 'react-modal';
 import './index.css';
+const rax = require('retry-axios');
 const axios = require('axios');
 
 
@@ -28,11 +29,21 @@ class Search extends React.Component{
   }
 
   async get_request(url){
-    const response = await axios.get(url, {
+    const axiosInstance = axios.create();
+    axiosInstance.defaults.timeout = 750;
+    axiosInstance.defaults.raxConfig = {
+      instance: axiosInstance
+    };
+    const interceptorId = rax.attach(axiosInstance);
+    return axiosInstance.get(url, {
     headers: {
       'Authorization': 'Bearer $ACCESS_TOKEN',
     },
-    timeout: 500,
+    raxConfig: {
+      retry: 3,
+      noResponseRetries: 3,
+      retryDelay: 0,
+    },
     responseType: 'json',
     })
     .then(function(response){
@@ -42,7 +53,6 @@ class Search extends React.Component{
       console.log(error)
       return({results: "error"})
     })
-    return(response)
   }
 
   async search_items(item_name){
@@ -51,27 +61,52 @@ class Search extends React.Component{
     return(response.results)
   }
 
-  async search_user(user_id){
-    const response = await this.get_request("https://api.mercadolibre.com/users/" + user_id)
-    return(response.nickname)
+  async search_users(users_ids){
+    const response = await this.get_request("https://api.mercadolibre.com/users?ids=" + users_ids)
+    //console.log(response)
+    return(await response)
   }
 
   format_image(img_url){
     return(img_url.substring(0, img_url.length-5)+"O.jpg")
   }
 
+  compute_discount(original_price, price){
+    const number = 100*(1-(price/original_price))
+    let number_string = number.toString().substring(0, 2)
+    if(number_string == "-I" || original_price == "null"){
+      number_string = "0"
+    }
+    if(number_string[1] == "."){
+      number_string = number_string.substring(0,1)
+    }
+    const percentage = (number_string + "%")
+    return(number_string)
+  }
+
   async search(itemToSearch){
     const items = await this.search_items(itemToSearch)
-    const sellers_ids = []
-    const items_images = []
+    const nicknames = []
+    const response = []
     try{
-      for(let i = 0; i < items.length; i++){
-        const seller_id = await this.search_user(items[i].seller.id)
-        sellers_ids.push(seller_id)
+      let sellers_id = items[0].seller.id
+      for(let i = 1; i < items.length; i++){
+        sellers_id += ","+items[i].seller.id
       }
-      const response = []
+      const sellers = await this.search_users(sellers_id)
+
+      console.log(sellers[0].body.nickname)
+      for(let i = 0; i < items.length; i++){
+        for(let j = 0; j < sellers.length; j++){
+          if(items[i].seller.id === sellers[j].body.id){
+            nicknames.push(sellers[j].body.nickname)
+          }
+        }
+      }
       for(let i = 0; i < items.length; i++){
         const image_formatted = this.format_image(items[i].thumbnail)
+        const discount = this.compute_discount(items[i].original_price, items[i].price)
+        console.log(discount)
         const item = {
           id: items[i].id,
           price: items[i].price,
@@ -79,8 +114,9 @@ class Search extends React.Component{
           thumbnail: image_formatted,
           seller: {
             id: items[i].seller.id,
-            name: sellers_ids[i]
+            name: nicknames[i]
           },
+          discount: discount
         }
         response.push(item)
       }
@@ -100,8 +136,9 @@ class Search extends React.Component{
     if(this.state.value === ""){
       return(0)
     }
-    this.setState({search: this.state.value})
-    const results = await this.search(this.state.value)
+    await this.setState({activePage: 1})
+    await this.setState({search: this.state.value})
+    const results = await this.search(this.state.search)
     if(results === "error"){
       console.log("It was not possible to retrieve data.")
       return(0)
@@ -180,22 +217,6 @@ class Search extends React.Component{
   }
 }
 
-async function search_user(user_id){
-  const response = await axios.get("https://api.mercadolibre.com/users/" + user_id, {
-  headers: {
-    'Authorization': 'Bearer $ACCESS_TOKEN',
-  },
-  timeout: 1000,
-  responseType: 'json',
-  })
-  .then(function(response){
-    return(response.data)
-  })
-  .catch(function(error){
-    console.log(error)
-  })
-  return(response.nickname)
-}
 
 
 function Item(props){
@@ -223,6 +244,9 @@ function Item(props){
 }
 
 
+
+
+
 function formatPrice(unformatted_price){
   const price = unformatted_price.toString();
   let formattedPrice = ""
@@ -238,6 +262,34 @@ function formatPrice(unformatted_price){
 }
 
 
+async function get_request(url){
+  const axiosInstance = axios.create();
+  axiosInstance.defaults.timeout = 500;
+  axiosInstance.defaults.raxConfig = {
+    instance: axiosInstance
+  };
+  const interceptorId = rax.attach(axiosInstance);
+  return axiosInstance.get(url, {
+  headers: {
+    'Authorization': 'Bearer $ACCESS_TOKEN',
+  },
+  raxConfig: {
+    retry: 3,
+    noResponseRetries: 3,
+    retryDelay: 0,
+  },
+  responseType: 'json',
+  })
+  .then(function(response){
+    return(response.data)
+  })
+  .catch(function(error){
+    console.log(error)
+    return({results: "error"})
+  })
+}
+
+
 class Shop extends React.Component{
   constructor(props){
     super(props);
@@ -245,6 +297,9 @@ class Shop extends React.Component{
       items: 20,
       leftItems: Array(10).fill(null),
       rightItems: Array(10).fill(null),
+      reviews: Array(20).fill(null),
+      detailedItem: null,
+      detailedItem: -1,
       modalIsOpen: false,
     }
     this.handleSearchClick = this.handleSearchClick.bind(this);
@@ -255,15 +310,24 @@ class Shop extends React.Component{
   renderItem(item, class_name) {
     return (
       <Item 
-        className={class_name}
+        id={item.item_id}
+        price={item.item_price}
+        name={item.item_name}
         image={item.item_image}
         altimg={item.item_altimg}
-        name={item.item_name}
-        price={item.item_price}
         seller={item.item_seller}
-        openModal={() => this.openModal(item.number)}
+        seller_id={item.item_seller_id}
+        className={class_name}
+        number={item.item_number}
+        discount={item.discount}
+        openModal={() => this.openModal(item.item_number)}
       />
     );
+  }
+
+  async search_opinions(item_id){
+    const response = await get_request("https://api.mercadolibre.com/reviews/item/" + item_id)
+    return({reviews: response.reviews, rating_average: response.rating_average})
   }
 
   async handleSearchClick(results) {
@@ -280,7 +344,8 @@ class Shop extends React.Component{
           item_altimg: results[i].id+"_img",
           item_seller_id: results[i].seller.id,
           item_seller: results[i].seller.name,
-          number: i,
+          item_discount: results[i].discount,
+          item_number: i,
         }
         if(i === 0){
           leftItems[i] = this.renderItem(item, "firstItem")
@@ -297,7 +362,8 @@ class Shop extends React.Component{
           item_altimg: results[i].id+"_img",
           item_seller_id: results[i].seller.id,
           item_seller: results[i].seller.name,
-          number: i,
+          item_discount: results[i].discount,
+          item_number: i,
         }
         if(i === 10){
           rightItems[i-10] = this.renderItem(item, "firstItem")
@@ -309,7 +375,17 @@ class Shop extends React.Component{
     this.setState({leftItems: leftItems, rightItems: rightItems})
   }
 
-  openModal (data) {
+  async openModal (item_number) {
+    console.log(item_number)
+    if(item_number < 10){
+      const reviews = await this.search_opinions(this.state.leftItems[item_number].props.id)
+      const detailedItem = {reviews: reviews.reviews, reviewsAmount: reviews.reviews.length, rating_average: reviews.rating_average}
+      this.setState({detailedItemNumber: item_number, detailedItem: detailedItem})
+    } else{
+      const reviews = await this.search_opinions(this.state.rightItems[item_number-10].props.id)
+      const detailedItem = {reviews: reviews.reviews, reviewsAmount: reviews.reviews.length, rating_average: reviews.rating_average}
+      this.setState({detailedItemNumber: item_number, detailedItem: detailedItem})
+    }
     this.setState({ modalIsOpen: true });
   };
 
@@ -325,13 +401,23 @@ class Shop extends React.Component{
           <Search 
             limit={this.state.items}
             handleSearchClick={this.handleSearchClick}
+            reviews={this.state.reviews}
           />
           <Modal 
             isOpen={this.state.modalIsOpen}
             onRequestClose={this.closeModal}>
-            <button onClick={this.closeModal}>Cerrar</button>
-            <div>I am a modal</div>
-            <label>modal</label>
+            <DetailedItem
+              image={this.state.detailedItemNumber >= 0 ? 
+                (this.state.detailedItemNumber < 10  ? this.state.leftItems[this.state.detailedItemNumber].props.image 
+                  : this.state.rightItems[this.state.detailedItemNumber%10].props.image) 
+                : null}
+              rating_average={this.state.detailedItem.rating_average}
+              reviewsAmount={this.state.detailedItem.reviewsAmount}
+              reviews={this.state.detailedItem.reviews}
+            /> 
+            <div className="button_container">
+              <button className="modal_button" onClick={this.closeModal}>Más resultados</button>
+            </div>
           </Modal>
           <table className="items">
             <thead >
@@ -350,6 +436,38 @@ class Shop extends React.Component{
       </div>
     );
   }
+}
+
+function DetailedItem(props){
+  return(
+    <div>
+      <table className="detailed_item_table">
+        <thead>
+        <tr className="detailed_item">
+          <td className="item_td_detailed_left">
+            <img className="item_image" src={props.image} alt={props.altimg} width="224" height="224"></img>
+          </td>
+          <td className="item_td_detailef_center">
+
+          </td>
+          <td className="item_td_detailed_right">
+            <ul className="detailed_item_ul">
+              <h2>Calificación: {props.reviewsAmount > 0 ? (props.rating_average + " con " + props.reviewsAmount + " Opiniones") : "Por definir"}</h2>
+              {props.reviews.map(function (review){
+                return (
+                <li> 
+                  <h3>{review.title}</h3>
+                  <label>{review.content}</label>
+                </li>
+                )
+              })}
+            </ul>
+          </td>
+        </tr>
+        </thead>
+      </table>
+    </div>
+  );
 }
 
 // ============================================================
